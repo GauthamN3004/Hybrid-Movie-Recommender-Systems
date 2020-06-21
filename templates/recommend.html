@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body %}
+
+<h3 style="background-color: rgba(230, 207, 2, 0.527);border-radius: 5px; padding: 1%;">BASED ON YOUR INTERESTS ...</h3>
+<div class="" >
+{% for d in cb_data %}
+    <div class="col-md-4 col-sm-6 col-xs-12" style="padding: 1%;">
+        <span><img src={{ d[2] }} alt="no image" width = 20% style="float: left;margin-right: 5%;"></span>
+        <b><a class="links" href= {{ d[3] }}  target="_blank" >{{ d[0] }}</a></b><br>
+            <p style="font-size: 15px;">{{ d[1] }}</p><br>
+    </div>
+{% endfor %}
+</div>
+
+{% endblock %}

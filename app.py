@@ -10,7 +10,7 @@ import json
 from wtforms import TextField, SubmitField, IntegerField, validators
 
 
-all_movies = pd.read_csv("movies.csv")
+all_movies = pd.read_csv("movies_with_genre.csv")
 all_ratings = pd.read_csv("ratings.csv")
 
 class Add(FlaskForm):
@@ -18,17 +18,17 @@ class Add(FlaskForm):
     submit = SubmitField('Submit')
 
 app = Flask(__name__)
-app.secret_key = ""
+app.secret_key = "APakdjne348s.APnfusjku2384"
 
 
 env = "dev"
 if env == "dev":
     app.debug=True
-    app.config['SQLALCHEMY_DATABASE_URI'] = ""
+    app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:APG2ffPH@localhost/movie_app"
 
 else:
     app.debug=True
-    app.config['SQLALCHEMY_DATABASE_URI'] = ""
+    app.config['SQLALCHEMY_DATABASE_URI'] = "postgres://gekcvccmiidzoy:1fc354cab81b37c2d950f3520670093c73f5aca3ed06370b9735dcb7fdf3a58d@ec2-34-194-198-176.compute-1.amazonaws.com:5432/d66h82jiimr9ma"
 
 
 db = SQLAlchemy(app)
@@ -211,6 +211,57 @@ def add_movies():
     return render_template("add_movie.html",form=form,movie_list = movie)
         
 
+def content_based():
+    my_movies = movies.query.filter_by(user_id = session["user_id"]).all()
+    m_ids = []
+    m_rats = []
+    avg_rating = all_ratings.groupby("movieId").mean()["rating"]
+    count_rating = all_ratings.groupby("movieId").count()["rating"]
+    for i in my_movies:
+        m_ids.append(i.movie_id)
+        m_rats.append(i.rating)
+
+    watched = all_movies.loc[all_movies["movieId"].isin(m_ids)]
+    not_watched = all_movies.loc[~all_movies["movieId"].isin(m_ids)]
+    watched = watched.reset_index(drop=True)
+    for i in range(watched.shape[0]):
+        this_id = watched["movieId"][i]
+        index = m_ids.index(this_id)
+        rating = m_rats[index]
+        for j in range(7,watched.shape[1]):
+            watched.iloc[i,j]*= (rating-3)
+
+    gen_mat = watched.iloc[:,7:]
+    gen_data = gen_mat.sum(axis = 0)
+    for j in gen_data.index:
+        not_watched[j] *=gen_data[j]
+
+    score = not_watched.iloc[:,7:].sum(axis=1)
+    score = (score - score.min())/(score.max()-score.min())
+    nw_ratings = not_watched["avg_rating"]
+    nw_ratings = (nw_ratings - nw_ratings.min())/(nw_ratings.max()-nw_ratings.min())
+    score = score*10 + nw_ratings*5
+    not_watched["score"] = score.tolist()
+    data = not_watched.sort_values(by = "score",ascending = False)
+    data = data.head(9)[["title","genres","poster_img","imdbId"]]
+    new_data = []
+    for i in range(data.shape[0]):
+        another = []
+        another.append(data.iloc[i,0])
+        another.append(data.iloc[i,1])
+        another.append(data.iloc[i,2])
+        imdb = data.iloc[i,3]
+        while(len(str(imdb))<7):
+            imdb = '0'+str(imdb)
+        link = "https://www.imdb.com/title/tt"+str(imdb)
+        another.append(link)
+        new_data.append(another)
+    return new_data
+
+@app.route("/rec",methods = ["GET","POST"])
+def recommend():
+    cb_data = content_based()
+    return render_template("recommend.html",cb_data = cb_data)
 
 
 @app.route("/logout")
