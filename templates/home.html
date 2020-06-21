@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block body %}
+
+<center><h2>MOVIES I HAVE WATCHED ... </h2></center>
+{% for i in range(n) %}
+    <div class = "">
+        {% for j in range(3) %}
+            {% if 3*i+j < total %}
+            <div class="col-md-4 col-sm-6 col-xs-12" style="padding: 1%;">
+                <span><img src={{ movies[i*3+j][2] }} alt="no image" width = 20% style="float: left;margin-right: 5%;"></span>
+                <b><a class="links" href= {{ movies[i*3+j][4] }}  target="_blank" >{{ movies[i*3+j][1]}}</a></b><br>
+                    <p style="font-size: 15px;">My Rating: <b>{{ movies[i*3+j][3]}}</b></p><br>
+            </div>
+            {%else%}
+            <div class="col-md-4 col-sm-6 col-xs-12">
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div><br>
+{% endfor %}
+
+{% endblock %}

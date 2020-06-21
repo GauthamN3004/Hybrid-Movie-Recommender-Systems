@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <title>Login</title>
+    <style>
+        .error {
+            color: rgb(151, 0, 0);
+            background-color: rgba(255, 0, 0, 0.527);
+        }
+        .success{
+            color: rgb(0, 97, 0);
+            background-color: rgba(0, 199, 0, 0.507);
+        }
+        body{
+            background-color: white;
+        }
+        #mydiv{
+            padding:5%;
+            background-color: rgba(211, 190, 0, 0.918);
+            color: white;
+            border-style: solid;
+            border-radius: 10px;
+            border-width: 1%;
+            border-color: white;
+        }
+        input{
+            width: 90%;
+            height: 35px;
+            font-size: 17px;
+            padding:2%;
+            text-align: center;
+            color: black;
+        }
+        p{
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body class="container-fluid">
+    <br>
+    <div class="row" >
+        <div class="col-md-4"></div>
+        <div class="col-md-4" id="mydiv">
+            <center>
+            {% block content %}
+            {% endblock %}
+            </center>
+        </div>
+        <div class="col-md-4"></div>
+    </div>
+</body>
+</html>

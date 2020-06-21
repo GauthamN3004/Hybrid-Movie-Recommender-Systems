@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="row">
+    <div class="col-md-4"></div>
+    <div class="col-md-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat,msg in messages%}
+            <div style = "padding-top: 5px;padding-bottom: 5px; border-radius: 3px;" class = {{ cat }}><center><p style="font-size: 15px;">{{ msg }}</p></center></div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    <div class="col-md-4"></div>
+</div>
+<br><br>
+<div class="row">
+    <div class="col-md-3"></div>
+    <div class="col-md-6" id="add_movie">
+        <center><h1>ADD MOVIE</h1></center><br>
+        <form action="#" method="post" class="">
+            MOVIE:
+            {{ form.movie(size = 30)}}<br><br><br>
+            RATING:
+            <input type="number" min="1" max="5" step="0.5" name="rating" required autocomplete="off"><br><br>
+            <center><div style="width:50%;"> {{ form.submit(class="btn btn-primary")}}</div></center>
+        </form>
+    </div>
+    <div class="col-md-3"></div>
+</div>
+<br><br>
+<center><h3>MY RATINGS</h3></center>
+<div class="row">
+    <div class="col-md-3"></div>
+    <div class="col-md-6">
+        <table>
+            <tr>
+                <th>MOVIE</th>
+                <center><th>RATING</th></center>
+                <center><th>DELETE</th></center>
+            </tr>
+            {% for i in movie_list %}
+            <tr>
+                <form action={{ url_for("delete") }} method = "POST">
+                        <td>{{ i[1] }}</td>
+                        <td><center>{{ i[2] }}</center></td>
+                        <td><center><button type="submit" class = "btn btn-danger" name = "delete" value= {{ i[0] }}><span class="glyphicon glyphicon-remove"></span></button></center></td>  
+                </form>
+            </tr>{% endfor %}
+        </table>
+    </div>
+    <div class="col-md-3"></div>
+    
+</div>
+<script>
+    $(function() {
+        $.ajax({
+            url: '{{ url_for("autocomplete") }}'
+            }).done(function (data){
+                $('#city_autocomplete').autocomplete({
+                    source: data,
+                    minLength: 2
+                });
+            });
+        });
+</script>
+{% endblock %}

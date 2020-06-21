@@ -1,0 +1,21 @@
+{% extends "reg_log_base.html" %}
+{% block content %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for cat,msg in messages%}
+            <div style = "padding-top: 5px;padding-bottom: 5px; border-radius: 3px;" class = {{ cat }}><center><p style="font-size: 15px;">{{ msg }}</p></center></div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+<h1>LOGIN</h1><br>
+<form action="#" method="post">
+    <p><span class="glyphicon glyphicon-user" style="text-align: left;"></span> USERNAME: </p>
+    <input type="text" required autocomplete="off" name = "username"><br><br>
+    <p><span class="glyphicon glyphicon-lock" style="text-align: left;"></span> PASSWORD:</p>
+    <input type="password" required name = "password"><br><br>
+    <button class="btn btn-default" type="submit">SUBMIT</button>
+</form>
+<br>
+<p>OR</p>
+<p><a href={{ url_for('register') }}><button class="btn btn-primary">Click here to Register</button></a></p>
+{% endblock content%}
