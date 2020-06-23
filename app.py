@@ -8,6 +8,7 @@ import numpy as np
 import psycopg2
 import json
 from wtforms import TextField, SubmitField, IntegerField, validators
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 all_movies = pd.read_csv("movies_with_genre.csv")
@@ -18,18 +19,17 @@ class Add(FlaskForm):
     submit = SubmitField('Submit')
 
 app = Flask(__name__)
-app.secret_key = "APakdjne348s.APnfusjku2384"
+app.secret_key = ""
 
 
 env = "dev"
 if env == "dev":
     app.debug=True
-    app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:APG2ffPH@localhost/movie_app"
+    app.config['SQLALCHEMY_DATABASE_URI'] = ""
 
 else:
     app.debug=True
-    app.config['SQLALCHEMY_DATABASE_URI'] = "postgres://gekcvccmiidzoy:1fc354cab81b37c2d950f3520670093c73f5aca3ed06370b9735dcb7fdf3a58d@ec2-34-194-198-176.compute-1.amazonaws.com:5432/d66h82jiimr9ma"
-
+    app.config['SQLALCHEMY_DATABASE_URI'] = ""
 
 db = SQLAlchemy(app)
 
@@ -114,7 +114,6 @@ def register():
 @app.route('/home/')
 def home():
     if(session["loggedin"] == True):
-        print(all_movies.columns)
         my_movies = movies.query.filter_by(user_id = session["user_id"]).all()
 
         if(len(my_movies) == 0):
@@ -156,7 +155,6 @@ def delete():
     if(request.method == "POST" and request.form["delete"]!= ""):
         del_id = request.form["delete"]
         del_movie = movies.query.filter_by(user_id = session["user_id"],movie_id = del_id)
-        print(del_movie)
         for d in del_movie:
             db.session.delete(d)
         db.session.commit()
@@ -171,7 +169,6 @@ def add_movies():
     form = Add()
 
     my_movie_list = movies.query.filter_by(user_id = session["user_id"]).all()
-    print(my_movie_list)
     rating = []
     movie = []
     for m in my_movie_list:
@@ -258,11 +255,81 @@ def content_based():
         new_data.append(another)
     return new_data
 
-@app.route("/rec",methods = ["GET","POST"])
-def recommend():
-    cb_data = content_based()
-    return render_template("recommend.html",cb_data = cb_data)
+def standardize(row):
+    return (row - row.mean())/(row.max()-row.min())
 
+def user_based():
+    user_movie_id = []
+    user_rating = []
+    user_id = []
+    my_movies = movies.query.filter_by(user_id = session["user_id"]).all()
+    for i in my_movies:
+        user_movie_id.append(i.movie_id)
+        user_rating.append(i.rating)
+        user_id.append(1000000)
+    
+    my_rating = pd.DataFrame({'userId' : user_id, 'movieId': user_movie_id,'rating' : user_rating})
+    num_movies = my_rating.shape[0]
+    new_rating = pd.concat([all_ratings,my_rating],axis=0,ignore_index=True)
+    rat_pivot = new_rating.pivot(index = "userId",columns = "movieId",values = "rating")
+    user_movie_ratings = rat_pivot[user_movie_id]
+    user_movie_ratings = user_movie_ratings.fillna(0)
+    user_movie_ratings = user_movie_ratings.apply(standardize)
+    user_similarity = cosine_similarity(user_movie_ratings)
+    user_similarity = pd.DataFrame(user_similarity,columns = rat_pivot.index,index = rat_pivot.index)
+    my_row = user_similarity.iloc[-1,:]
+    my_row = my_row.sort_values(ascending = False)
+    most_similar = my_row.iloc[1:11]
+    most_similar_user = most_similar.index.to_list()
+    most_similar_score = list(my_row.iloc[1:11].values)
+    not_watched = rat_pivot.drop(columns = user_movie_id)
+    not_watched = not_watched.T[most_similar_user]
+    not_watched = not_watched[not_watched.isnull().sum(axis=1) <= int(num_movies/2)]
+    my_dict=dict()
+    for i in range(len(most_similar_user)):
+        my_dict[most_similar_user[i]] = most_similar_score[i]
+    for i in most_similar_user:
+        not_watched[i]*=my_dict[i]
+    score = []
+    for i in range(not_watched.shape[0]):
+        s1 = 0
+        s2 = 0
+        for j in range(not_watched.shape[1]):
+            if(np.isnan(not_watched.iloc[i,j])):
+                continue
+            else:
+                s1 = s1+not_watched.iloc[i,j]
+                s2 = s2 + my_dict[not_watched.columns[j]]
+                
+        s1 = s1/s2
+        score.append(s1)
+    not_watched['score'] = score
+    not_watched = not_watched.sort_values(by = "score",ascending = False)
+    nw = not_watched.iloc[:12,0].index.tolist()
+    not_watched = all_movies.loc[all_movies["movieId"].isin(nw)]
+    data = not_watched[["title","genres","poster_img","imdbId"]]
+    new_data = []
+    for i in range(not_watched.shape[0]):
+        another = []
+        another.append(data.iloc[i,0])
+        another.append(data.iloc[i,1])
+        another.append(data.iloc[i,2])
+        imdb = data.iloc[i,3]
+        while(len(str(imdb))<7):
+            imdb = '0'+str(imdb)
+        link = "https://www.imdb.com/title/tt"+str(imdb)
+        another.append(link)
+        new_data.append(another)
+    return new_data
+
+@app.route("/recommend",methods = ["GET","POST"])
+def recommend():
+    if(session["loggedin"] != True):
+        flash("This page requires you to login !",category= "error")
+        return redirect(url_for('login'))
+    cb_data = content_based()
+    ub_data = user_based()
+    return render_template("recommend.html",cb_data = cb_data,ub_data = ub_data)
 
 @app.route("/logout")
 def logout():

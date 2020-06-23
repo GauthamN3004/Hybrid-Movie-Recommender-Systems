@@ -1,15 +1,148 @@
-{% extends "base.html" %}
-{% block body %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <title>My Movie Recommender</title>
+    <style>
+        #loading {
+            position:fixed;
+            width: 100%;
+            height: 100vh;
+            background: rgb(240,240,240) url("https://media.giphy.com/media/jAYUbVXgESSti/giphy.gif") no-repeat center;
+            z-index: 99999;
+        }
+        textarea{
+            resize: none;
+            max-width: 90%;
+            min-width: 90%;
+            color: black;
+            font-size: 15px;
+            padding:2%;
+        }
+        .error {
+            color: rgb(151, 0, 0);
+            background-color: rgba(255, 0, 0, 0.527);
+        }
+        .success{
+            color: rgb(0, 97, 0);
+            background-color: rgba(0, 199, 0, 0.507);
+        }
+        #nav{
+            background-color: rgba(211, 190, 0, 0.918);
+            border-radius: 5px;
+            color:  white;
+        }
+        a{color:  white;}
+        .menu_icon {
+            width: 20px;
+            height: 2px;
+            background-color: white;
+            margin: 2px 0;
+        }
+        body{
+            background-color: white;
+            font-family:Verdana, Geneva, Tahoma, sans-serif;
+        }
+        
+        input{
+            width: 90%;
+            height: 35px;
+            font-size: 15px;
+            padding:2%;
+            text-align: center;
+            color: black;
+        }
+        #add_movie{
+            background-color: rgba(211, 190, 0, 0.918);
+            border-radius: 5px;
+            padding: 1%;
+            text-align: center;
+            
+        }
+        p{
+            font-size: 20px;
+        }
+        .ui-autocomplete {
+            max-height: 40%;
+            width: 30%;
+            overflow-y: scroll;   /* prevent horizontal scrollbar */
+            overflow-x: scroll; /* add padding to account for vertical scrollbar */
+            z-index:1000 !important;
+        }
+        table{
+            width: 100%;
+            text-align: center;
+        }
+        tr{background-color: rgba(230, 207, 2, 0.527);border-bottom:solid 1px  rgba(211, 190, 0, 0.918);}
+        td{padding: 1%;}
+        th{background-color: rgba(211, 190, 0, 0.918);padding: 1%;text-align: center;}
+        .links{ color: rgb(0, 88, 129); font-size: 15px;}
+        .links:hover{
+            color: rgb(0, 88, 209);
+        }
+     
+    </style>
+</head>
+<body class="container-fluid">
+    <div id="loading"></div>
+    <nav class="navbar">
+    <div class="container-fluid" id = "nav">
+        <div class="navbar-header">
+        <button type="button" class="navbar-toggle" id= "collapse_button" data-toggle="collapse" data-target="#myNavbar">
+            <div class="menu_icon"></div>
+            <div class="menu_icon"></div>
+            <div class="menu_icon"></div>                     
+            
+        </button>
+        <li class="navbar-brand">Movie Recommender</li>
+        </div>
+        <div class="collapse navbar-collapse" id="myNavbar">
+        <ul class="nav navbar-nav">
+            <li><a href= {{ url_for('home') }}>Home</a></li>
+            <li><a href={{url_for('recommend') }}>Recommend</a></li>
+            <li><a href={{ url_for('add_movies') }}>Add my Movies</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+            <li><a href= {{ url_for('logout') }}><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+        </ul>
+        </div>
+    </div>  
+    </nav>
 
-<h3 style="background-color: rgba(230, 207, 2, 0.527);border-radius: 5px; padding: 1%;">BASED ON YOUR INTERESTS ...</h3>
-<div class="" >
-{% for d in cb_data %}
-    <div class="col-md-4 col-sm-6 col-xs-12" style="padding: 1%;">
-        <span><img src={{ d[2] }} alt="no image" width = 20% style="float: left;margin-right: 5%;"></span>
-        <b><a class="links" href= {{ d[3] }}  target="_blank" >{{ d[0] }}</a></b><br>
-            <p style="font-size: 15px;">{{ d[1] }}</p><br>
+    <h3 style="background-color: rgba(230, 207, 2, 0.527);border-radius: 5px; padding: 1%;">USERS SIMILAR TO YOU ALSO WATCHED ...</h3>
+    <div class="row" >
+    {% for d in ub_data %}
+        <div class="col-md-4 col-sm-6 col-xs-12" style="padding: 1%;">
+            <span><img src={{ d[2] }}  onerror="this.src='../static/no_img.jpg'" width = 20% style="float: left;margin-right: 5%;"></span>
+            <b><a class="links" href= {{ d[3] }}  target="_blank" >{{ d[0] }}</a></b><br>
+                <p style="font-size: 15px;">{{ d[1] }}</p><br>
+        </div>
+    {% endfor %}
     </div>
-{% endfor %}
-</div>
+    <br><br><br>
 
-{% endblock %}
+    <h3 style="background-color: rgba(230, 207, 2, 0.527);border-radius: 5px; padding: 1%;">BASED ON YOUR INTERESTS ...</h3>
+    <div class="row" >
+    {% for d in cb_data %}
+        <div class="col-md-4 col-sm-6 col-xs-12" style="padding: 1%;">
+            <span><img src={{ d[2] }}  onerror="this.src='../static/no_img.jpg'" width = 20% style="float: left;margin-right: 5%;"></span>
+            <b><a class="links" href= {{ d[3] }}  target="_blank" >{{ d[0] }}</a></b><br>
+                <p style="font-size: 15px;">{{ d[1] }}</p><br>
+        </div>
+    {% endfor %}
+    </div>
+    <br><br><br>
+    <script>
+        $(window).load(function() {
+          $('#loading').hide();
+        });
+      </script>
+</body>
+</html>
